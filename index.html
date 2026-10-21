@@ -599,6 +599,53 @@ tbody tr.linha-prioridade{
   .rel-proc-valor{flex:0 0 80px;font-size:12px}
   .rel-pizza-wrap{flex-direction:column}
 }
+
+/* ══ ATENDIMENTOS POR MÊS / ESPECIALIDADE ══ */
+.badge-especialidade{
+  padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700;
+  display:inline-flex;align-items:center;gap:5px;white-space:nowrap;color:#fff;
+}
+.mes-atual-chip{
+  display:inline-flex;align-items:center;gap:6px;
+  background:var(--azul-light);color:var(--azul);
+  padding:6px 14px;border-radius:999px;font-size:12.5px;font-weight:700;
+}
+.filtro-campo.md input,.filtro-campo.md select{width:170px}
+.painel-esp{margin:4px 0 18px;padding:14px 16px;border:1px solid var(--borda);border-radius:12px;background:#fafcff}
+.painel-esp-topo{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.painel-esp-sub{font-size:12px;color:var(--cinza)}
+.btn-mes{width:30px;height:30px;border-radius:50%;background:#fff;border:1.5px solid var(--borda);color:var(--navy);font-weight:700}
+.btn-mes:hover{border-color:var(--azul);color:var(--azul)}
+.esp-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.esp-card{background:#fff;border:1.5px solid var(--borda);border-radius:10px;padding:10px 12px;cursor:pointer;transition:all .15s}
+.esp-card:hover{border-color:var(--azul);transform:translateY(-1px)}
+.esp-card.ativo{border-color:var(--azul);box-shadow:0 0 0 3px rgba(26,108,245,.12)}
+.esp-card-meta{display:flex;justify-content:space-between;margin:8px 0 6px;font-size:12px;color:var(--cinza)}
+.esp-card-meta strong{color:var(--navy)}
+.esp-datas{display:flex;flex-wrap:wrap;gap:4px}
+.esp-data{background:#f1f5f9;border-radius:6px;padding:2px 7px;font-size:11px;font-weight:600;color:var(--cinza)}
+.esp-vazio{font-size:13px;color:#94a3b8;padding:6px 0}
+.rel-mes-sel{padding:8px 14px;border-radius:999px;border:1.5px solid var(--borda);background:#fff;font-size:13px;font-weight:700;color:var(--navy)}
+.rel-chip-periodo{margin-bottom:14px}
+.status-mes{font-size:12px;font-weight:700;padding:5px 12px;border-radius:999px}
+.status-mes.travada{background:var(--verde-light);color:#0a7a55}
+.status-mes.edicao{background:var(--amarelo-light);color:#b45309}
+.status-mes.nova{background:#f1f5f9;color:var(--cinza)}
+.btn-mini[disabled]{opacity:.35;cursor:not-allowed;filter:grayscale(.6)}
+.btn-mini[disabled]:hover{transform:none}
+.sem-esp .col-esp{display:none}
+.abertos-linha{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:6px}
+.mes-aberto-card{display:flex;align-items:center;justify-content:space-between;gap:14px;flex:1 1 320px;
+  background:#fff;border:1.5px solid var(--borda);border-radius:10px;padding:10px 14px}
+.mes-aberto-meta{display:block;font-size:12px;color:var(--cinza);margin-top:2px}
+.mes-aberto-acoes{display:flex;gap:8px;flex-wrap:wrap}
+.gravados-titulo{font-size:12px;font-weight:700;color:var(--cinza);margin:12px 0 8px;text-transform:uppercase;letter-spacing:.4px}
+.btn-mes-gravado{background:#fff;border:1.5px solid var(--borda);border-radius:999px;padding:6px 14px;font-size:12.5px;font-weight:700;color:var(--navy)}
+.btn-mes-gravado span{background:var(--azul-light);color:var(--azul);border-radius:999px;padding:1px 8px;margin-left:4px;font-size:11px}
+.btn-mes-gravado:hover{border-color:var(--azul);color:var(--azul)}
+@media(max-width:600px){
+  .filtro-campo.md input,.filtro-campo.md select{width:100%}
+}
 </style>
 </head>
 <body>
@@ -729,6 +776,23 @@ tbody tr.linha-prioridade{
             <input type="number" id="idade" placeholder="—" readonly>
           </div>
 
+          <!-- DATA DO ATENDIMENTO -->
+          <div class="campo f4">
+            <label>Data do Atendimento</label>
+            <input class="campo-navegavel" type="date" id="dataAtendimento">
+          </div>
+
+          <!-- ESPECIALIDADE -->
+          <div class="campo f8">
+            <label>Especialidade</label>
+            <select class="campo-navegavel" id="especialidade" onchange="alternarEspecialidadeOutra()"></select>
+          </div>
+
+          <div class="campo f12" id="campoEspecialidadeOutra" style="display:none">
+            <label>Nome da Nova Especialidade</label>
+            <input class="campo-navegavel" type="text" id="especialidadeOutra" placeholder="Digite o nome da especialidade" style="text-transform:uppercase">
+          </div>
+
           <!-- PROCEDIMENTO -->
           <div class="campo f8">
             <label>Procedimento</label>
@@ -854,13 +918,17 @@ tbody tr.linha-prioridade{
               <label>Buscar nome</label>
               <input class="campo-filtro-navegavel" type="text" id="buscaNome" placeholder="Nome…" oninput="renderizarTabela()">
             </div>
-            <div class="filtro-campo sm">
-              <label>Por dia</label>
-              <input class="campo-filtro-navegavel" type="date" id="filtroDia" onchange="renderizarTabela()">
+            <div class="filtro-campo md">
+              <label>📅 Mês do Atendimento</label>
+              <select class="campo-filtro-navegavel" id="filtroMes" onchange="mudarMes(this.value)"></select>
             </div>
             <div class="filtro-campo sm">
-              <label>Por mês</label>
-              <input class="campo-filtro-navegavel" type="month" id="filtroMes" onchange="renderizarTabela()">
+              <label>Dia do Atendimento</label>
+              <input class="campo-filtro-navegavel" type="date" id="filtroDia" onchange="mudarDia(this.value)">
+            </div>
+            <div class="filtro-campo md" id="filtroEspWrap">
+              <label>🩺 Especialidade</label>
+              <select class="campo-filtro-navegavel" id="filtroEspecialidade" onchange="renderizarTabela()"></select>
             </div>
             <div class="filtro-campo xs">
               <label>% Clínica</label>
@@ -871,12 +939,39 @@ tbody tr.linha-prioridade{
           </div>
         </div>
 
+        <!-- LISTA EM ABERTO -->
+        <div class="painel-esp" id="painelAberto">
+          <div class="painel-esp-topo">
+            <span class="mes-atual-chip">📋 Lista em aberto</span>
+            <span class="painel-esp-sub">Atendimentos de meses ainda não gravados. Ao gravar um mês, ele sai desta lista e fica só dentro do mês.</span>
+          </div>
+          <div class="abertos-linha" id="mesesAbertos"></div>
+          <div class="gravados-titulo" id="tituloGravados">📁 Meses gravados — clique para abrir</div>
+          <div class="abertos-linha" id="mesesGravados"></div>
+        </div>
+
+        <!-- ESPECIALISTAS DO MÊS -->
+        <div class="painel-esp" id="painelMes">
+          <div class="painel-esp-topo">
+            <button class="btn-mes" onclick="mudarMesRelativo(-1)" title="Mês anterior">◀</button>
+            <span class="mes-atual-chip" id="chipMesLista">—</span>
+            <button class="btn-mes" onclick="mudarMesRelativo(1)" title="Próximo mês">▶</button>
+            <span class="painel-esp-sub">Especialistas e datas de atendimento do mês — clique para filtrar</span>
+            <button class="btn-acao btn-limpar" onclick="mudarMes('__aberto__')">← Lista em aberto</button>
+            <span style="flex:1"></span>
+            <span class="status-mes nova" id="statusMes"></span>
+            <button class="btn-acao" id="btnGravarMes" onclick="alternarGravacaoMes()" style="background:var(--verde)">💾 Gravar lista</button>
+          </div>
+          <div class="esp-cards" id="painelEspecialistas"></div>
+        </div>
+
         <!-- TABELA -->
         <div class="table-wrap">
           <table>
             <thead>
               <tr>
-                <th>#</th><th>Nome</th><th>Nasc.</th><th>Id.</th>
+                <th>#</th><th>Nome</th><th>Data Atend.</th>
+                <th>Nasc.</th><th>Id.</th>
                 <th>Procedimento</th><th>Valor</th>
                 <th>Clínica</th><th>Médico</th>
                 <th>Pagamento</th><th>Ações</th>
@@ -929,12 +1024,15 @@ tbody tr.linha-prioridade{
 
         <!-- FILTRO DE PERÍODO -->
         <div class="rel-periodo">
+          <select class="rel-mes-sel" id="relMesSel" onchange="setRelMes(this.value)"></select>
           <button class="rel-periodo-btn" onclick="setRelPeriodo(7,this)">7 dias</button>
-          <button class="rel-periodo-btn ativo" onclick="setRelPeriodo(30,this)">30 dias</button>
+          <button class="rel-periodo-btn" onclick="setRelPeriodo(30,this)">30 dias</button>
           <button class="rel-periodo-btn" onclick="setRelPeriodo(90,this)">3 meses</button>
           <button class="rel-periodo-btn" onclick="setRelPeriodo(365,this)">12 meses</button>
           <button class="rel-periodo-btn" onclick="setRelPeriodo(0,this)">Tudo</button>
         </div>
+
+        <div class="rel-chip-periodo"><span class="mes-atual-chip" id="relChipPeriodo">—</span></div>
 
         <!-- KPIs -->
         <div class="rel-kpis">
@@ -979,6 +1077,18 @@ tbody tr.linha-prioridade{
             <canvas id="canvasPizza" width="160" height="160" style="flex-shrink:0"></canvas>
             <div class="rel-pizza-legenda" id="relPizzaLegenda"></div>
           </div>
+        </div>
+
+        <!-- FATURAMENTO POR ESPECIALIDADE -->
+        <div class="rel-grafico-card">
+          <div class="rel-secao-titulo">🩺 Faturamento por Especialidade</div>
+          <div id="relEspecialidade"></div>
+        </div>
+
+        <!-- COMPARATIVO MENSAL -->
+        <div class="rel-grafico-card">
+          <div class="rel-secao-titulo">📅 Comparativo Mensal (todos os meses)</div>
+          <div id="relPorMes"></div>
         </div>
 
         <!-- RESUMO DO PERÍODO -->
@@ -1036,6 +1146,188 @@ let retornoVisivel=false;
 let pagamento2Visivel=false;
 let prioridadeVisivel=false;
 
+/* ══ MÊS / ESPECIALIDADES (helpers) ══ */
+const CHAVE_ESP='odontoMedEspecialidades';
+const ESPECIALIDADES_PADRAO=['Cardiologista','Endocrinologista','Gastroenterologista','Ultrassonografista','Ginecologista','Quiropraxista','Naturopata','Ortopedista'];
+const PALETA_ESPECIALIDADE=['#0a2540','#00b87a','#7c3aed','#e53e3e','#f59e0b','#0ea5e9','#ec4899','#16a34a','#64748b'];
+
+/* data local (não usa toISOString, que vira o dia seguinte à noite no Brasil) */
+function hojeISO(){
+  const d=new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function mesAtual(){return hojeISO().slice(0,7);}
+function mesReferenciaDe(data){return data?String(data).slice(0,7):'';}
+function nomeMes(mesRef){
+  if(mesRef==='__aberto__')return 'Lista em aberto';
+  if(mesRef==='__sem__')return 'Sem data';
+  if(!mesRef)return 'Todos os meses';
+  const [ano,mes]=mesRef.split('-');
+  const nomes=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  return nomes[parseInt(mes,10)-1]+'/'+ano;
+}
+function registroNoMes(r,mes){
+  if(!mes)return true;
+  if(mes==='__aberto__')return !mesFoiGravado(mesReferenciaDe(r.dataAtendimento));
+  if(mes==='__sem__')return !r.dataAtendimento;
+  return mesReferenciaDe(r.dataAtendimento)===mes;
+}
+let mesSelecionado='__aberto__';   /* '__aberto__' = lista em aberto; senão um mês (YYYY-MM) */
+let relMes=mesAtual();           /* mês exibido nos Relatórios ('' = usar período em dias) */
+
+/* ══ GRAVAR / EDITAR A LISTA DO MÊS ══ */
+const CHAVE_MESES='odontoMedMesesGravados';
+function carregarMesesGravados(){
+  try{const d=JSON.parse(localStorage.getItem(CHAVE_MESES));return(d&&typeof d==='object'&&!Array.isArray(d))?d:{};}
+  catch(e){return{};}
+}
+function salvarMesesGravados(o){localStorage.setItem(CHAVE_MESES,JSON.stringify(o));}
+function mesBloqueado(mesRef){
+  if(!mesRef)return false;
+  const g=carregarMesesGravados()[mesRef];
+  return !!(g&&g.travada);
+}
+function formatarDataHora(iso){
+  const d=new Date(iso);
+  if(isNaN(d))return '';
+  return d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+}
+/* o mês já foi gravado alguma vez (travado ou em edição): some da lista em aberto */
+function mesFoiGravado(mesRef){
+  if(!mesRef)return false;
+  return !!carregarMesesGravados()[mesRef];
+}
+/* especialidades só aparecem dentro de um mês */
+function mostrarColunaEsp(){
+  return !!mesSelecionado&&mesSelecionado!=='__aberto__'&&mesSelecionado!=='__sem__';
+}
+function avisoMesGravado(mesRef){
+  alert('🔒 A lista de '+nomeMes(mesRef)+' está gravada.\n\nNa Lista, escolha esse mês e clique em "Editar lista" para liberar as alterações.');
+}
+function atualizarControlesMes(){
+  const btn=document.getElementById('btnGravarMes');
+  const st=document.getElementById('statusMes');
+  if(!btn||!st)return;
+  const mes=mesSelecionado;
+  if(!mes||mes==='__sem__'||mes==='__aberto__'){btn.style.display='none';st.style.display='none';return;}
+  btn.style.display='';st.style.display='';
+  const g=carregarMesesGravados()[mes];
+  if(g&&g.travada){
+    st.className='status-mes travada';
+    st.textContent='🔒 Gravada em '+formatarDataHora(g.gravadoEm)+' · '+g.qtd+' atend. · '+dinheiro(g.valor);
+    btn.textContent='✏️ Editar lista';
+    btn.style.background='var(--amarelo)';
+  }else if(g){
+    st.className='status-mes edicao';
+    st.textContent='✏️ Em edição — grave de novo ao terminar (última gravação: '+formatarDataHora(g.gravadoEm)+')';
+    btn.textContent='💾 Gravar lista de '+nomeMes(mes);
+    btn.style.background='var(--verde)';
+  }else{
+    st.className='status-mes nova';
+    st.textContent='Lista ainda não gravada';
+    btn.textContent='💾 Gravar lista de '+nomeMes(mes);
+    btn.style.background='var(--verde)';
+  }
+}
+function gravarMes(mes){
+  if(!mes||mes==='__sem__'||mes==='__aberto__'){alert('Escolha um mês específico para gravar a lista.');return;}
+  const todos=carregarMesesGravados();
+  const doMes=registros.filter(r=>mesReferenciaDe(r.dataAtendimento)===mes);
+  if(!doMes.length){alert('Não há atendimentos em '+nomeMes(mes)+' para gravar.');return;}
+  const valor=doMes.reduce((t,r)=>t+(Number(r.valor)||0),0);
+  if(!confirm('Gravar a lista de '+nomeMes(mes)+'?\n\n'+doMes.length+' atendimento(s) · '+dinheiro(valor)+
+    '\n\nEla sai da Lista em aberto e passa a aparecer somente dentro de '+nomeMes(mes)+
+    '. A lista fica protegida até você clicar em "Editar lista".'))return;
+  todos[mes]={travada:true,gravadoEm:new Date().toISOString(),qtd:doMes.length,valor};
+  salvarMesesGravados(todos);
+  renderizarTabela();
+}
+function liberarMes(mes){
+  const todos=carregarMesesGravados();
+  const g=todos[mes];
+  if(!g)return;
+  if(!confirm('Liberar a lista de '+nomeMes(mes)+' para edição?\n\nQuando terminar, clique em "Gravar lista" de novo.'))return;
+  g.travada=false;
+  g.liberadaEm=new Date().toISOString();
+  salvarMesesGravados(todos);
+  renderizarTabela();
+}
+function alternarGravacaoMes(){
+  const mes=mesSelecionado;
+  if(!mes||mes==='__sem__'||mes==='__aberto__'){alert('Abra um mês para gravar ou editar a lista.');return;}
+  const g=carregarMesesGravados()[mes];
+  if(g&&g.travada)liberarMes(mes);else gravarMes(mes);
+}
+
+function semAcento(t){return String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();}
+function formatarNomeEsp(t){
+  const peq=['de','da','do','das','dos','e'];
+  return String(t||'').trim().toLowerCase().split(/\s+/).filter(Boolean)
+    .map((p,i)=>(i>0&&peq.includes(p))?p:p.charAt(0).toUpperCase()+p.slice(1)).join(' ');
+}
+function carregarEspecialidadesExtras(){
+  try{const d=JSON.parse(localStorage.getItem(CHAVE_ESP));return Array.isArray(d)?d:[];}
+  catch(e){return[];}
+}
+function listaEspecialidades(){
+  const todas=[...ESPECIALIDADES_PADRAO,...carregarEspecialidadesExtras(),...registros.map(r=>r.especialidade)].filter(Boolean);
+  const vistos=new Set(),out=[];
+  todas.forEach(e=>{const k=semAcento(e);if(!vistos.has(k)){vistos.add(k);out.push(e);}});
+  return out.sort((a,b)=>a.localeCompare(b,'pt-BR'));
+}
+/* usa o nome já existente (ignorando maiúsculas/acentos) ou formata o novo */
+function resolverEspecialidade(nome){
+  const n=formatarNomeEsp(nome);
+  return listaEspecialidades().find(e=>semAcento(e)===semAcento(n))||n;
+}
+function registrarEspecialidade(nome){
+  if(!nome)return;
+  if(listaEspecialidades().some(e=>semAcento(e)===semAcento(nome))){
+    if(ESPECIALIDADES_PADRAO.concat(carregarEspecialidadesExtras()).some(e=>semAcento(e)===semAcento(nome)))return;
+  }
+  const extras=carregarEspecialidadesExtras();
+  extras.push(nome);
+  localStorage.setItem(CHAVE_ESP,JSON.stringify(extras));
+}
+function corEspecialidade(nome){
+  const n=String(nome||'').trim().toUpperCase();
+  if(!n)return '#94a3b8';
+  let hash=0;
+  for(let i=0;i<n.length;i++)hash=n.charCodeAt(i)+((hash<<5)-hash);
+  return PALETA_ESPECIALIDADE[Math.abs(hash)%PALETA_ESPECIALIDADE.length];
+}
+function gerarBadgeEspecialidade(nome){
+  if(!nome)return '<span style="color:#cbd5e1;font-size:12px">—</span>';
+  return `<span class="badge-especialidade" style="background:${corEspecialidade(nome)}">🩺 ${textoSeguro(nome)}</span>`;
+}
+
+/* ══ ESPECIALIDADE no cadastro ══ */
+function popularEspecialidadesCadastro(selecionada){
+  const sel=document.getElementById('especialidade');
+  if(!sel)return;
+  const atual=(selecionada!==undefined)?selecionada:sel.value;
+  sel.innerHTML='<option value="">Selecione a especialidade…</option>'+
+    listaEspecialidades().map(e=>`<option value="${textoSeguro(e)}">${textoSeguro(e)}</option>`).join('')+
+    '<option value="__outra__">➕ Nova especialidade…</option>';
+  sel.value=atual||'';
+  if(sel.value!==(atual||''))sel.value='';
+}
+function alternarEspecialidadeOutra(){
+  const sel=document.getElementById('especialidade').value;
+  const campo=document.getElementById('campoEspecialidadeOutra');
+  campo.style.display=(sel==='__outra__')?'block':'none';
+  if(sel==='__outra__')setTimeout(()=>document.getElementById('especialidadeOutra').focus(),60);
+  else document.getElementById('especialidadeOutra').value='';
+}
+function obterEspecialidadeSelecionada(){
+  const sel=document.getElementById('especialidade').value;
+  if(sel==='__outra__'){
+    const digitado=document.getElementById('especialidadeOutra').value.trim();
+    return digitado?resolverEspecialidade(digitado):'';
+  }
+  return sel;
+}
+
 /* ══ STORAGE ══ */
 function carregarRegistros(){
   try{const d=JSON.parse(localStorage.getItem(CHAVE));return Array.isArray(d)?d:[];}
@@ -1064,6 +1356,7 @@ function mostrarTelaCadastro(){
   document.getElementById('telaCadastro').classList.add('ativa');
   document.getElementById('topbarTitulo').textContent='Novo Cadastro';
   setNavAtivo('nav-cadastro');
+  popularEspecialidadesCadastro('');
   limparFormulario();
   setTimeout(()=>document.getElementById('nome').focus(),100);
 }
@@ -1196,6 +1489,8 @@ function cadastrarProcedimento(){
   const nome=document.getElementById('nome').value.trim();
   const dataNascimento=document.getElementById('dataNascimento').value;
   const idade=document.getElementById('idade').value;
+  const dataAtendimento=document.getElementById('dataAtendimento').value||hojeISO();
+  const especialidade=obterEspecialidadeSelecionada();
   const procedimento=document.getElementById('procedimento').value.trim();
   const valor=parseFloat(document.getElementById('valor').value)||0;
   const pagamento=document.getElementById('pagamento').value;
@@ -1212,6 +1507,9 @@ function cadastrarProcedimento(){
   if(!nome||!dataNascimento||!procedimento){
     alert('⚠️ Preencha Nome, Data de Nascimento e Procedimento.');return;
   }
+  if(!especialidade){
+    alert('⚠️ Selecione (ou digite) a Especialidade do atendimento.');return;
+  }
   if(!retornoVisivel&&(valor<=0||!pagamento)){
     alert('⚠️ Informe o Valor e a Forma de Pagamento.');return;
   }
@@ -1223,7 +1521,9 @@ function cadastrarProcedimento(){
     }
   }
 
-  const dados={nome,dataNascimento,idade,procedimento,valor,pagamento,
+  if(mesBloqueado(mesReferenciaDe(dataAtendimento))){avisoMesGravado(mesReferenciaDe(dataAtendimento));return;}
+
+  const dados={nome,dataNascimento,idade,dataAtendimento,especialidade,procedimento,valor,pagamento,
     pagamentoDuplo:pag2ativo,pagamento2:pag2ativo?pagamento2:'',
     valorPag1:pag2ativo?valorPag1:0,valorPag2:pag2ativo?valorPag2:0,
     dataRetorno,obsRetorno,
@@ -1233,6 +1533,8 @@ function cadastrarProcedimento(){
   if(indiceEdicao!==null){registros[indiceEdicao]=dados;indiceEdicao=null;}
   else{registros.push(dados);}
 
+  registrarEspecialidade(especialidade);
+
   // Salva prioridade global se definida
   if(nomePrioridadeDigitado){
     salvarPrioridade(nomePrioridadeDigitado);
@@ -1240,29 +1542,42 @@ function cadastrarProcedimento(){
   }
 
   salvarRegistros();
-  alert('✅ Cadastro realizado com sucesso!');
+
+  // meses ainda abertos → lista em aberto; mês já gravado (em edição) → dentro do mês
+  const mesDestino=mesReferenciaDe(dataAtendimento);
+  mesSelecionado=mesFoiGravado(mesDestino)?mesDestino:'__aberto__';
+  const diaFiltro=document.getElementById('filtroDia');if(diaFiltro)diaFiltro.value='';
+  const espFiltro=document.getElementById('filtroEspecialidade');if(espFiltro)espFiltro.value='';
+
+  alert('✅ Atendimento gravado em '+nomeMes(mesDestino)+' — '+especialidade+'!');
   limparFormulario();
   mostrarTelaLista();
 }
 
 function limparFormulario(){
-  ['nome','dataNascimento','idade','procedimento','valor','pagamento',
+  ['nome','dataNascimento','idade','dataAtendimento','especialidade','especialidadeOutra',
+   'procedimento','valor','pagamento',
    'valorPag1','pagamento2','valorPag2','dataRetorno','obsRetorno','nomePrioridade']
   .forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  document.getElementById('campoEspecialidadeOutra').style.display='none';
   if(retornoVisivel)toggleRetorno();
   if(pagamento2Visivel)togglePagamento2();
   if(prioridadeVisivel)togglePrioridade();
   indiceEdicao=null;
   document.getElementById('btnSalvar').textContent='＋ Cadastrar Procedimento';
+  document.getElementById('dataAtendimento').value=hojeISO();
 }
 
 function editarPaciente(index){
   const p=registros[index];if(!p)return;
+  if(mesBloqueado(mesReferenciaDe(p.dataAtendimento))){avisoMesGravado(mesReferenciaDe(p.dataAtendimento));return;}
   mostrarTelaCadastro();
   setTimeout(()=>{
     document.getElementById('nome').value=p.nome||'';
     document.getElementById('dataNascimento').value=p.dataNascimento||'';
     document.getElementById('idade').value=p.idade||'';
+    document.getElementById('dataAtendimento').value=p.dataAtendimento||hojeISO();
+    popularEspecialidadesCadastro(p.especialidade||'');
     document.getElementById('procedimento').value=p.procedimento||'';
     document.getElementById('valor').value=p.valor||'';
     document.getElementById('pagamento').value=p.pagamento||'';
@@ -1284,6 +1599,7 @@ function editarPaciente(index){
 
 function excluirPaciente(index){
   if(index<0||index>=registros.length)return;
+  if(mesBloqueado(mesReferenciaDe(registros[index].dataAtendimento))){avisoMesGravado(mesReferenciaDe(registros[index].dataAtendimento));return;}
   if(!confirm('Deseja excluir este paciente?'))return;
   registros.splice(index,1);
   salvarRegistros();
@@ -1292,6 +1608,7 @@ function excluirPaciente(index){
 
 function alternarPrioridadeLista(index){
   const p=registros[index];if(!p)return;
+  if(mesBloqueado(mesReferenciaDe(p.dataAtendimento))){avisoMesGravado(mesReferenciaDe(p.dataAtendimento));return;}
   p.prioridade=!p.prioridade;
   if(p.prioridade){
     salvarPrioridade(p.nome);
@@ -1341,16 +1658,152 @@ function calcularDistribuicao(valor){
 function obterFiltrados(){
   const busca=(document.getElementById('buscaNome')?.value||'').toLowerCase().trim();
   const dia=document.getElementById('filtroDia')?.value||'';
-  const mes=document.getElementById('filtroMes')?.value||'';
-  return registros.filter(item=>{
+  const esp=mostrarColunaEsp()?(document.getElementById('filtroEspecialidade')?.value||''):'';
+  const lista=registros.filter(item=>{
     const nOk=!busca||String(item.nome).toLowerCase().includes(busca);
-    const dOk=!dia||item.dataNascimento===dia;
-    const mOk=!mes||String(item.dataNascimento).startsWith(mes);
-    return nOk&&dOk&&mOk;
+    const dOk=!dia||item.dataAtendimento===dia;
+    const mOk=registroNoMes(item,mesSelecionado);
+    const eOk=!esp||item.especialidade===esp;
+    return nOk&&dOk&&mOk&&eOk;
   });
+  /* ordena por data do atendimento (sem data por último) */
+  return lista.sort((a,b)=>String(a.dataAtendimento||'9999').localeCompare(String(b.dataAtendimento||'9999')));
+}
+
+/* ══ MÊS: seletor, navegação e painel de especialistas ══ */
+function popularSeletorMes(){
+  const sel=document.getElementById('filtroMes');
+  if(!sel)return;
+  const grav=carregarMesesGravados();
+  const meses=new Set(registros.map(r=>mesReferenciaDe(r.dataAtendimento)).filter(Boolean));
+  meses.add(mesAtual());
+  Object.keys(grav).forEach(m=>meses.add(m));
+  if(mesSelecionado&&mesSelecionado!=='__sem__'&&mesSelecionado!=='__aberto__')meses.add(mesSelecionado);
+  let html='<option value="__aberto__">📋 Lista em aberto</option>'+
+    [...meses].sort().reverse().map(m=>{
+      const g=grav[m];
+      const pre=g?(g.travada?'🔒 ':'✏️ '):'';
+      return `<option value="${m}">${pre}${nomeMes(m)}</option>`;
+    }).join('');
+  if(registros.some(r=>!r.dataAtendimento))html+='<option value="__sem__">Sem data</option>';
+  sel.innerHTML=html;
+  sel.value=mesSelecionado;
+}
+function popularSeletorEspecialidade(){
+  const sel=document.getElementById('filtroEspecialidade');
+  if(!sel)return;
+  const atual=sel.value;
+  const esps=mostrarColunaEsp()
+    ?[...new Set(registros.filter(r=>registroNoMes(r,mesSelecionado)).map(r=>r.especialidade).filter(Boolean))]
+        .sort((a,b)=>a.localeCompare(b,'pt-BR'))
+    :[];
+  sel.innerHTML='<option value="">Todas</option>'+
+    esps.map(e=>`<option value="${textoSeguro(e)}">${textoSeguro(e)}</option>`).join('');
+  sel.value=esps.includes(atual)?atual:'';
+}
+function mudarMes(v){
+  mesSelecionado=v;
+  const dia=document.getElementById('filtroDia');if(dia)dia.value='';
+  renderizarTabela();
+}
+function mudarDia(v){
+  if(v){
+    const m=mesReferenciaDe(v);
+    if(mesSelecionado==='__aberto__'){if(mesFoiGravado(m))mesSelecionado=m;}
+    else mesSelecionado=m;
+  }
+  renderizarTabela();
+}
+function mudarMesRelativo(delta){
+  const base=(mesSelecionado&&mesSelecionado!=='__sem__'&&mesSelecionado!=='__aberto__')?mesSelecionado:mesAtual();
+  const [a,m]=base.split('-').map(Number);
+  const d=new Date(a,m-1+delta,1);
+  mesSelecionado=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+  const dia=document.getElementById('filtroDia');if(dia)dia.value='';
+  renderizarTabela();
+}
+function filtrarEspecialidade(nome){
+  const sel=document.getElementById('filtroEspecialidade');
+  sel.value=(sel.value===nome)?'':nome;
+  renderizarTabela();
+}
+function renderizarPainelAberto(){
+  const grav=carregarMesesGravados();
+  const abertos={};
+  let semData=0;
+  registros.forEach(r=>{
+    const m=mesReferenciaDe(r.dataAtendimento);
+    if(!m){semData++;return;}
+    if(grav[m])return;
+    if(!abertos[m])abertos[m]={qtd:0,valor:0};
+    abertos[m].qtd++;abertos[m].valor+=Number(r.valor)||0;
+  });
+  const entradas=Object.entries(abertos).sort((a,b)=>b[0].localeCompare(a[0]));
+  let html=entradas.map(([m,i])=>`<div class="mes-aberto-card">
+      <div><strong>📅 ${nomeMes(m)}</strong><span class="mes-aberto-meta">${i.qtd} atend. · ${dinheiro(i.valor)}</span></div>
+      <div class="mes-aberto-acoes">
+        <button class="btn-acao" style="background:var(--verde)" onclick="gravarMes('${m}')">💾 Gravar</button>
+        <button class="btn-acao btn-limpar" onclick="mudarMes('${m}')">Abrir mês</button>
+      </div></div>`).join('');
+  if(!entradas.length)html='<div class="esp-vazio">Nenhum atendimento em aberto com data.</div>';
+  if(semData)html+=`<div class="esp-vazio" style="flex-basis:100%">⚠️ ${semData} atendimento(s) sem data — edite para colocá-los em um mês.</div>`;
+  document.getElementById('mesesAbertos').innerHTML=html;
+
+  const gm=Object.keys(grav).sort().reverse();
+  document.getElementById('tituloGravados').style.display=gm.length?'':'none';
+  document.getElementById('mesesGravados').innerHTML=gm.map(m=>{
+    const n=registros.filter(r=>mesReferenciaDe(r.dataAtendimento)===m).length;
+    return `<button class="btn-mes-gravado" onclick="mudarMes('${m}')">${grav[m].travada?'🔒':'✏️'} ${nomeMes(m)} <span>${n}</span></button>`;
+  }).join('');
+}
+function renderizarPainelEspecialistas(){
+  const aberto=(mesSelecionado==='__aberto__');
+  const mostraEsp=mostrarColunaEsp();
+  document.getElementById('painelAberto').style.display=aberto?'':'none';
+  document.getElementById('painelMes').style.display=aberto?'none':'';
+  const tb=document.getElementById('tabelaPacientes');
+  if(tb&&tb.closest('table'))tb.closest('table').classList.toggle('sem-esp',!mostraEsp);
+  const fw=document.getElementById('filtroEspWrap');
+  if(fw)fw.style.display=mostraEsp?'':'none';
+  if(aberto){renderizarPainelAberto();return;}
+
+  const el=document.getElementById('painelEspecialistas');
+  if(!el)return;
+  document.getElementById('chipMesLista').textContent='📅 '+nomeMes(mesSelecionado);
+  atualizarControlesMes();
+  const doMes=registros.filter(r=>registroNoMes(r,mesSelecionado));
+  const ativo=document.getElementById('filtroEspecialidade')?.value||'';
+  if(!doMes.length){
+    el.innerHTML='<div class="esp-vazio">Nenhum atendimento gravado em '+textoSeguro(nomeMes(mesSelecionado))+'.</div>';
+    return;
+  }
+  const grupos={};
+  doMes.forEach(r=>{
+    const k=r.especialidade||'';
+    if(!grupos[k])grupos[k]={qtd:0,valor:0,dias:{}};
+    grupos[k].qtd++;
+    grupos[k].valor+=Number(r.valor)||0;
+    const dk=r.dataAtendimento||'';
+    grupos[k].dias[dk]=(grupos[k].dias[dk]||0)+1;
+  });
+  el.innerHTML=Object.entries(grupos)
+    .sort((a,b)=>a[0].localeCompare(b[0],'pt-BR'))
+    .map(([nome,g])=>{
+      const datas=Object.entries(g.dias).sort((a,b)=>a[0].localeCompare(b[0])).map(([d,q])=>{
+        const rot=d?d.slice(8,10)+'/'+d.slice(5,7):'s/ data';
+        return `<span class="esp-data">${rot}${q>1?' ×'+q:''}</span>`;
+      }).join('');
+      const filtravel=nome?`onclick="filtrarEspecialidade(decodeURIComponent('${encodeURIComponent(nome)}'))"`:'';
+      return `<div class="esp-card${nome&&nome===ativo?' ativo':''}" ${filtravel}>
+        ${gerarBadgeEspecialidade(nome)}
+        <div class="esp-card-meta"><span><strong>${g.qtd}</strong> atend.</span><strong>${dinheiro(g.valor)}</strong></div>
+        <div class="esp-datas">${datas}</div>
+      </div>`;
+    }).join('');
 }
 function limparFiltros(){
-  ['buscaNome','filtroDia','filtroMes'].forEach(id=>document.getElementById(id).value='');
+  ['buscaNome','filtroDia','filtroEspecialidade'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  mesSelecionado='__aberto__';
   renderizarTabela();
 }
 
@@ -1358,6 +1811,9 @@ function limparFiltros(){
 function renderizarTabela(){
   const tabela=document.getElementById('tabelaPacientes');
   if(!tabela)return;
+  popularSeletorMes();
+  popularSeletorEspecialidade();
+  renderizarPainelEspecialistas();
   tabela.innerHTML='';
   let tC=0,tM=0,tV=0;
   const pags=new Set();
@@ -1376,6 +1832,7 @@ function renderizarTabela(){
       (priorNome&&String(item.nome).toUpperCase().includes(priorNome));
 
     const trClasse=ehPrior?'linha-prioridade':'';
+    const trav=mesBloqueado(mesReferenciaDe(item.dataAtendimento))?' disabled':'';
     const tagPrior=ehPrior?'<span class="tag-prioridade tag-prioridade-sm">🚨 PRIORIDADE</span> ':'';
 
     let retornoCell='<span style="color:#cbd5e1;font-size:12px">—</span>';
@@ -1388,6 +1845,7 @@ function renderizarTabela(){
       <tr class="${trClasse}">
         <td style="color:#94a3b8;font-size:12px">${pos+1}</td>
         <td><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">${tagPrior}<span style="font-weight:600">${textoSeguro(item.nome)}</span></div></td>
+        <td style="color:#64748b;white-space:nowrap">${item.dataAtendimento?formatarData(item.dataAtendimento):'—'}</td>
         <td style="color:#64748b">${formatarData(item.dataNascimento)}</td>
         <td style="color:#64748b">${textoSeguro(item.idade)}</td>
         <td>${gerarBadgeProcedimento(item.procedimento,item.pagamento)}</td>
@@ -1398,9 +1856,9 @@ function renderizarTabela(){
         <td class="acoes-td">
           <div class="acoes-grupo">
             <button onclick="visualizarAtendimento(${idx})" class="btn-mini btn-mini-ver" title="Ver">👁️</button>
-            <button onclick="editarPaciente(${idx})" class="btn-mini btn-mini-edit" title="Editar">✏️</button>
-            <button onclick="excluirPaciente(${idx})" class="btn-mini btn-mini-del" title="Excluir">🗑️</button>
-            <button onclick="alternarPrioridadeLista(${idx})" class="btn-mini btn-mini-prior" title="${ehPrior?'Remover prioridade':'Marcar como prioridade'}">${ehPrior?'★':'☆'}</button>
+            <button onclick="editarPaciente(${idx})" class="btn-mini btn-mini-edit"${trav} title="${trav?'Mês gravado — use Editar lista':'Editar'}">✏️</button>
+            <button onclick="excluirPaciente(${idx})" class="btn-mini btn-mini-del"${trav} title="${trav?'Mês gravado — use Editar lista':'Excluir'}">🗑️</button>
+            <button onclick="alternarPrioridadeLista(${idx})" class="btn-mini btn-mini-prior"${trav} title="${trav?'Mês gravado — use Editar lista':(ehPrior?'Remover prioridade':'Marcar como prioridade')}">${ehPrior?'★':'☆'}</button>
           </div>
           ${item.dataRetorno?`<div style="margin-top:5px">${retornoCell}</div>`:''}
         </td>
@@ -1408,7 +1866,7 @@ function renderizarTabela(){
   });
 
   if(filtrados.length===0){
-    tabela.innerHTML='<tr><td colspan="10" style="text-align:center;color:#94a3b8;padding:28px;font-size:13px">Nenhum paciente encontrado.</td></tr>';
+    tabela.innerHTML=`<tr><td colspan="11" style="text-align:center;color:#94a3b8;padding:28px;font-size:13px">${mesSelecionado==='__aberto__'?'Nenhum atendimento em aberto.':'Nenhum paciente encontrado em '+textoSeguro(nomeMes(mesSelecionado))+'.'}</td></tr>`;
   }
 
   document.getElementById('totalPacientes').textContent=filtrados.length;
@@ -1427,11 +1885,11 @@ function abrirModalListaCompleta(){
     document.getElementById('dadosListaCompleta').innerHTML='<p style="color:#94a3b8;padding:20px 0">Nenhum paciente.</p>';
     document.getElementById('modalListaCompleta').classList.add('ativo');return;
   }
-  let html=`<div class="table-wrap"><table style="min-width:600px">
-    <thead><tr><th>Nome</th><th>Nasc.</th><th>Id.</th><th>Procedimento</th><th>Valor</th><th>Pagamento</th><th>Retorno</th></tr></thead><tbody>`;
+  let html=`<div class="table-wrap"><table style="min-width:680px">
+    <thead><tr><th>Nome</th><th>Data Atend.</th><th>Nasc.</th><th>Id.</th><th>Procedimento</th><th>Valor</th><th>Pagamento</th><th>Retorno</th></tr></thead><tbody>`;
   filtrados.forEach(p=>{
     const ret=p.dataRetorno?formatarData(p.dataRetorno)+(p.obsRetorno?' — '+textoSeguro(p.obsRetorno):''):'—';
-    html+=`<tr><td>${textoSeguro(p.nome)}</td><td>${formatarData(p.dataNascimento)}</td><td>${textoSeguro(p.idade)}</td>
+    html+=`<tr><td>${textoSeguro(p.nome)}</td><td>${p.dataAtendimento?formatarData(p.dataAtendimento):'—'}</td><td>${formatarData(p.dataNascimento)}</td><td>${textoSeguro(p.idade)}</td>
       <td>${textoSeguro(p.procedimento)}</td><td>${dinheiro(p.valor)}</td>
       <td>${gerarBadgePagamentoDuplo(p)}</td><td>${ret}</td></tr>`;
   });
@@ -1457,6 +1915,8 @@ function visualizarAtendimento(index){
   const prior=p.prioridade?'<span class="tag-prioridade">🚨 PRIORIDADE</span>':'—';
   document.getElementById('dadosAtendimento').innerHTML=`
     <p><strong>Nome</strong><span>${textoSeguro(p.nome)}</span></p>
+    ${mostrarColunaEsp()?`<p><strong>Especialidade</strong><span>${gerarBadgeEspecialidade(p.especialidade)}</span></p>`:''}
+    <p><strong>Data do Atendimento</strong><span>${p.dataAtendimento?formatarData(p.dataAtendimento):'—'}</span></p>
     <p><strong>Nascimento</strong><span>${formatarData(p.dataNascimento)}</span></p>
     <p><strong>Idade</strong><span>${textoSeguro(p.idade)}</span></p>
     <p><strong>Procedimento</strong><span>${textoSeguro(p.procedimento)}</span></p>
@@ -1484,6 +1944,8 @@ function gerarReciboPDF(){
     '</head><body><h1>🦷 Recibo OdontoMed</h1><div class="box">'+
     '<p><strong>Nome</strong>'+textoSeguro(p.nome)+'</p>'+
     '<p><strong>Nascimento</strong>'+formatarData(p.dataNascimento)+'</p>'+
+    '<p><strong>Especialidade</strong>'+textoSeguro(p.especialidade||'—')+'</p>'+
+    '<p><strong>Data do Atendimento</strong>'+(p.dataAtendimento?formatarData(p.dataAtendimento):'—')+'</p>'+
     '<p><strong>Procedimento</strong>'+textoSeguro(p.procedimento)+'</p>'+
     '<p><strong>Valor</strong>'+dinheiro(p.valor)+'</p>'+
     '<p><strong>Pagamento</strong>'+pag+'</p>'+
@@ -1500,13 +1962,15 @@ function exportarExcel(){
     const pag=p.pagamentoDuplo?(p.pagamento+' R$'+p.valorPag1+' + '+p.pagamento2+' R$'+p.valorPag2):p.pagamento;
     const ret=p.dataRetorno?formatarData(p.dataRetorno)+(p.obsRetorno?' - '+p.obsRetorno:''):'';
     const prior=p.prioridade?'SIM':'';
-    return[p.nome,formatarData(p.dataNascimento),p.idade,p.procedimento,p.valor,pag,ret,prior];
+    return[p.nome,p.especialidade||'',p.dataAtendimento?formatarData(p.dataAtendimento):'',
+      formatarData(p.dataNascimento),p.idade,p.procedimento,p.valor,pag,ret,prior];
   });
-  let csv='Nome;Data Nasc.;Idade;Procedimento;Valor;Pagamento;Retorno;Prioridade\n';
+  let csv='Nome;Especialidade;Data Atendimento;Data Nasc.;Idade;Procedimento;Valor;Pagamento;Retorno;Prioridade\n';
   linhas.forEach(l=>{csv+=l.map(c=>String(c??'').replaceAll(';',',')).join(';')+'\n';});
-  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'});
   const link=document.createElement('a');
-  link.href=URL.createObjectURL(blob);link.download='pacientes_odonto_med.csv';link.click();
+  const sufixo=(mesSelecionado&&mesSelecionado!=='__sem__')?'_'+mesSelecionado:(mesSelecionado==='__sem__'?'_sem_data':'_todos');
+  link.href=URL.createObjectURL(blob);link.download='pacientes_odonto_med'+sufixo+'.csv';link.click();
 }
 
 /* ══ ENTER ══ */
@@ -1515,7 +1979,8 @@ function configurarEnter(){
   campos.forEach((c,i)=>{
     c.addEventListener('keydown',e=>{
       if(e.key==='Enter'){e.preventDefault();
-        const nx=campos[i+1];if(nx)nx.focus();else cadastrarProcedimento();}
+        const nx=campos.slice(i+1).find(el=>el.offsetParent!==null);
+        if(nx)nx.focus();else cadastrarProcedimento();}
     });
   });
   const filtros=[...document.querySelectorAll('.campo-filtro-navegavel')];
@@ -1543,6 +2008,8 @@ document.getElementById('dataNascimento').addEventListener('input',calcularIdade
 });
 
 document.getElementById('dataAtualTopo').textContent=new Date().toLocaleDateString('pt-BR');
+popularEspecialidadesCadastro('');
+document.getElementById('dataAtendimento').value=hojeISO();
 atualizarAlertaPrioridade();
 configurarEnter();
 renderizarTabela();
@@ -1550,16 +2017,103 @@ renderizarTabela();
 /* ══ RELATÓRIOS ══ */
 let relDias = 30;
 
+
+/* dados do relatório: mês escolhido OU período em dias */
+function dadosDoRelatorio(){
+  if(relMes==='__sem__')return registros.filter(r=>!r.dataAtendimento);
+  if(relMes)return registros.filter(r=>mesReferenciaDe(r.dataAtendimento)===relMes);
+  if(relDias===0)return registros;
+  const corte=new Date();corte.setHours(0,0,0,0);corte.setDate(corte.getDate()-relDias);
+  return registros.filter(r=>r.dataAtendimento&&new Date(r.dataAtendimento+'T00:00:00')>=corte);
+}
+function popularSeletorMesRel(){
+  const sel=document.getElementById('relMesSel');
+  if(!sel)return;
+  const meses=new Set(registros.map(r=>mesReferenciaDe(r.dataAtendimento)).filter(Boolean));
+  meses.add(mesAtual());
+  let html='<option value="">📅 Período em dias ▸</option>'+
+    [...meses].sort().reverse().map(m=>`<option value="${m}">📅 ${nomeMes(m)}</option>`).join('');
+  if(registros.some(r=>!r.dataAtendimento))html+='<option value="__sem__">📅 Sem data</option>';
+  sel.innerHTML=html;
+  sel.value=relMes;
+}
+function setRelMes(v){
+  relMes=v;
+  document.querySelectorAll('.rel-periodo-btn').forEach(b=>b.classList.remove('ativo'));
+  if(!v){
+    const b=[...document.querySelectorAll('.rel-periodo-btn')]
+      .find(x=>(x.getAttribute('onclick')||'').startsWith('setRelPeriodo('+relDias+','));
+    if(b)b.classList.add('ativo');
+  }
+  renderizarRelatorios();
+}
+function renderizarRelatorioExtras(dados){
+  /* chip do período */
+  const chip=document.getElementById('relChipPeriodo');
+  if(chip)chip.textContent=relMes?'📅 '+nomeMes(relMes):(relDias===0?'📅 Todo o período':'📅 Últimos '+relDias+' dias');
+
+  /* faturamento por especialidade */
+  const espMap={};
+  dados.forEach(r=>{
+    const nome=(r.especialidade||'').trim()||'Sem especialidade';
+    if(!espMap[nome])espMap[nome]={valor:0,qtd:0};
+    espMap[nome].valor+=Number(r.valor)||0;
+    espMap[nome].qtd++;
+  });
+  const espEntries=Object.entries(espMap).sort((a,b)=>b[1].valor-a[1].valor);
+  const maxEsp=espEntries[0]?Math.max(espEntries[0][1].valor,1):1;
+  const relEspEl=document.getElementById('relEspecialidade');
+  if(!espEntries.length){
+    relEspEl.innerHTML='<p style="color:#94a3b8;font-size:13px;padding:12px 0">Nenhuma especialidade registrada.</p>';
+  }else{
+    relEspEl.innerHTML=espEntries.map(([nome,info])=>{
+      const cor=corEspecialidade(nome);
+      return `<div class="rel-proc-item">
+        <span class="rel-proc-nome" title="${textoSeguro(nome)}">
+          <span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${cor};margin-right:6px"></span>${textoSeguro(nome)}
+          <span style="color:#94a3b8;font-weight:500">(${info.qtd})</span>
+        </span>
+        <div class="rel-proc-barra-bg"><div class="rel-proc-barra-fill" style="width:${Math.round(info.valor/maxEsp*100)}%;background:${cor}"></div></div>
+        <span class="rel-proc-valor">${dinheiro(info.valor)}</span>
+      </div>`;
+    }).join('');
+  }
+
+  /* comparativo mensal — sempre todos os meses, um não interfere no outro */
+  const mesMap={};
+  registros.forEach(r=>{
+    const m=mesReferenciaDe(r.dataAtendimento);
+    if(!m)return;
+    if(!mesMap[m])mesMap[m]={qtd:0,valor:0};
+    mesMap[m].qtd++;mesMap[m].valor+=Number(r.valor)||0;
+  });
+  const mesEntries=Object.entries(mesMap).sort((a,b)=>b[0].localeCompare(a[0]));
+  const relMesEl=document.getElementById('relPorMes');
+  if(!mesEntries.length){
+    relMesEl.innerHTML='<p style="color:#94a3b8;font-size:13px;padding:12px 0">Nenhum atendimento com data registrada.</p>';
+  }else{
+    const maxMes=Math.max(...mesEntries.map(([,v])=>v.valor),1);
+    relMesEl.innerHTML=mesEntries.map(([m,info])=>`<div class="rel-proc-item">
+        <span class="rel-proc-nome">📅 ${nomeMes(m)} <span style="color:#94a3b8;font-weight:500">(${info.qtd} atend.)</span></span>
+        <div class="rel-proc-barra-bg"><div class="rel-proc-barra-fill" style="width:${Math.round(info.valor/maxMes*100)}%"></div></div>
+        <span class="rel-proc-valor">${dinheiro(info.valor)}</span>
+      </div>`).join('');
+  }
+}
+
 function mostrarTelaRelatorios(){
   esconderTelas();
   document.getElementById('telaRelatorios').classList.add('ativa');
   document.getElementById('topbarTitulo').textContent='Relatórios';
   setNavAtivo('nav-relatorios');
+  popularSeletorMesRel();
   renderizarRelatorios();
 }
 
 function setRelPeriodo(dias, btn){
   relDias = dias;
+  relMes = '';
+  const sel=document.getElementById('relMesSel');if(sel)sel.value='';
   document.querySelectorAll('.rel-periodo-btn').forEach(b=>b.classList.remove('ativo'));
   btn.classList.add('ativo');
   renderizarRelatorios();
@@ -1578,15 +2132,7 @@ function filtrarPorPeriodo(){
 function renderizarRelatorios(){
   // Usa todos os registros (dataNascimento é do paciente, não do atendimento)
   // Para um sistema real, teria campo dataAtendimento — aqui usamos tudo
-  const dados = relDias === 0 ? registros : (() => {
-    const corte = new Date();
-    corte.setDate(corte.getDate() - relDias);
-    // tenta filtrar por dataAtendimento se existir, senão usa todos
-    return registros.filter(r => {
-      const d = r.dataAtendimento || r.dataNascimento;
-      return !d || new Date(d + 'T00:00:00') >= corte;
-    });
-  })();
+  const dados = dadosDoRelatorio();
 
   const total = dados.reduce((s,r)=>s+(Number(r.valor)||0),0);
   const ticket = dados.length ? total/dados.length : 0;
@@ -1659,6 +2205,9 @@ function renderizarRelatorios(){
 
   // Desenhar barras por semana
   desenharBarras(dados);
+
+  // Especialidades + comparativo mensal
+  renderizarRelatorioExtras(dados);
 }
 
 function desenharPizza(entries, total, cores){
@@ -1715,8 +2264,13 @@ function desenharBarras(dados){
   const fat = [0,0,0,0];
 
   dados.forEach(r=>{
-    const d = r.dataAtendimento || r.dataNascimento;
+    const d = r.dataAtendimento;
     if(!d) return;
+    if(relMes && relMes !== '__sem__'){
+      const dia = parseInt(d.slice(8,10),10);
+      fat[Math.min(3, Math.floor((dia-1)/7))] += Number(r.valor)||0;
+      return;
+    }
     const dt = new Date(d+'T00:00:00');
     const diffDias = Math.floor((agora - dt)/(1000*60*60*24));
     const semIdx = Math.min(3, Math.floor(diffDias/7));
@@ -1777,22 +2331,15 @@ function desenharBarras(dados){
 }
 
 function exportarRelatorioExcel(){
-  const dados = relDias === 0 ? registros : (() => {
-    const corte = new Date();
-    corte.setDate(corte.getDate() - relDias);
-    return registros.filter(r=>{
-      const d=r.dataAtendimento||r.dataNascimento;
-      return !d||new Date(d+'T00:00:00')>=corte;
-    });
-  })();
+  const dados = dadosDoRelatorio();
 
   // Aba 1: Lista
   let csv = 'RELATÓRIO ODONTOMED\n';
-  csv += 'Nome;Nascimento;Procedimento;Valor;Pagamento;Retorno\n';
+  csv += 'Nome;Especialidade;Data Atendimento;Nascimento;Procedimento;Valor;Pagamento;Retorno\n';
   dados.forEach(r=>{
     const pag = r.pagamentoDuplo?(r.pagamento+'+'+r.pagamento2):r.pagamento;
     const ret = r.dataRetorno?formatarData(r.dataRetorno):'';
-    csv += [r.nome,formatarData(r.dataNascimento),r.procedimento,r.valor,pag,ret].map(c=>String(c??'').replaceAll(';',',')).join(';')+'\n';
+    csv += [r.nome,r.especialidade||'',r.dataAtendimento?formatarData(r.dataAtendimento):'',formatarData(r.dataNascimento),r.procedimento,r.valor,pag,ret].map(c=>String(c??'').replaceAll(';',',')).join(';')+'\n';
   });
   csv += '\nRESUMO\n';
   const total = dados.reduce((s,r)=>s+(Number(r.valor)||0),0);
@@ -1814,10 +2361,22 @@ function exportarRelatorioExcel(){
   dados.forEach(r=>{const n=(r.procedimento||'').toUpperCase().trim();if(n)procMap[n]=(procMap[n]||0)+(Number(r.valor)||0);});
   Object.entries(procMap).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>{csv+=k+';'+v+'\n';});
 
+  csv += '\nFATURAMENTO POR ESPECIALIDADE\n';
+  const espMapX={};
+  dados.forEach(r=>{const e=(r.especialidade||'Sem especialidade').trim();
+    if(!espMapX[e])espMapX[e]={qtd:0,valor:0};espMapX[e].qtd++;espMapX[e].valor+=Number(r.valor)||0;});
+  Object.entries(espMapX).sort((a,b)=>b[1].valor-a[1].valor).forEach(([k,v])=>{csv+=k+';'+v.qtd+' atendimentos;'+v.valor+'\n';});
+
+  csv += '\nATENDIMENTOS POR MÊS\n';
+  const mesMapX={};
+  registros.forEach(r=>{const m=mesReferenciaDe(r.dataAtendimento);if(!m)return;
+    if(!mesMapX[m])mesMapX[m]={qtd:0,valor:0};mesMapX[m].qtd++;mesMapX[m].valor+=Number(r.valor)||0;});
+  Object.entries(mesMapX).sort((a,b)=>b[0].localeCompare(a[0])).forEach(([m,v])=>{csv+=nomeMes(m)+';'+v.qtd+' atendimentos;'+v.valor+'\n';});
+
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
   const link=document.createElement('a');
   link.href=URL.createObjectURL(blob);
-  link.download='relatorio_odontomed.csv';
+  link.download='relatorio_odontomed'+(relMes&&relMes!=='__sem__'?'_'+relMes:'')+'.csv';
   link.click();
 }
 
